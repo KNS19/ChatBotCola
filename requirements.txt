@@ -1,0 +1,8 @@
+numpy
+scikit-learn
+pythainlp
+line-bot-sdk
+fastapi
+uvicorn[standard]
+google-generativeai
+fastapi

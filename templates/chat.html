@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chatbot เทศบาล</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== Container ===== */
+.chat-container {
+    width: 420px;
+    height: 600px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: auto;
+}
+
+/* ===== Header ===== */
+.chat-header {
+    background: #2b7cff;
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* ===== Body ===== */
+.chat-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #f9fafb;
+}
+
+/* ===== Footer ===== */
+.chat-footer {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.chat-footer input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 14px;
+}
+
+.chat-footer button {
+    margin-left: 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 20px;
+    background: #2b7cff;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* ===== Messages ===== */
+.message {
+    max-width: 80%;
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    border-radius: 18px;
+    line-height: 1.4;
+    font-size: 14px;
+    word-wrap: break-word;
+}
+
+.user {
+    background: #2b7cff;
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 6px;
+}
+
+.bot {
+    background: #e9ecef;
+    color: #333;
+    margin-right: auto;
+    border-bottom-left-radius: 6px;
+}
+
+.typing {
+    font-style: italic;
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+/* ===== 📱 Mobile Responsive ===== */
+@media (max-width: 600px) {
+    body {
+        background: #ffffff;
+    }
+
+    .chat-container {
+        width: 100vw;
+        height: 80vh;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .chat-header {
+        padding: 12px;
+        font-size: 16px;
+    }
+
+    .chat-footer input {
+        font-size: 16px; /* ป้องกัน iOS zoom */
+    }
+
+    .chat-footer button {
+        padding: 12px;
+        font-size: 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+         เจ้าหน้าที่เทศบาล
+    </div>
+
+    <div class="chat-body" id="chat"></div>
+
+    <div class="chat-footer">
+        <input id="msg" placeholder="พิมพ์ข้อความ..." 
+               onkeydown="if(event.key==='Enter') send()" />
+        <button onclick="send()">ส่ง</button>
+    </div>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+
+function addMessage(text, sender) {
+    const div = document.createElement("div");
+    div.className = "message " + sender;
+    div.innerText = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+    const div = document.createElement("div");
+    div.id = "typing";
+    div.className = "typing";
+    div.innerText = "เจ้าหน้าที่กำลังพิมพ์...";
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+    const typing = document.getElementById("typing");
+    if (typing) typing.remove();
+}
+
+async function send() {
+    const input = document.getElementById("msg");
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage(text, "user");
+    input.value = "";
+
+    showTyping();
+
+    try {
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ message: text })
+        });
+
+        const data = await res.json();
+        hideTyping();
+        addMessage(data.reply, "bot");
+
+    } catch (err) {
+        hideTyping();
+        addMessage("เกิดข้อผิดพลาด กรุณาลองใหม่", "bot");
+    }
+}
+</script>
+
+</body>
+</html>
