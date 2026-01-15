@@ -14,12 +14,13 @@ from linebot.v3.messaging import (
 )
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
+import os
 
 # =====================
 # LINE CONFIG
 # =====================
-channel_secret = "LINE_CHANNEL_SECRET"
-channel_access_token = "LINE_CHANNEL_ACCESS_TOKEN"
+channel_secret = os.environ.get("LINE_CHANNEL_SECRET")
+channel_access_token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
 
 if not channel_secret or not channel_access_token:
     print("Missing LINE credentials")
