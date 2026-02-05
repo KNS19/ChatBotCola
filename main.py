@@ -60,37 +60,40 @@ class ComplaintRequest(BaseModel):
 # =====================
 @app.post("/chat")
 async def chat_api(req: ChatRequest):
-    text = req.message
+    text = req.message.strip()
 
-    # ตรวจจับการติดตามคำร้อง
-    if "ติดตาม" in text:
-        match = re.search(r"#?(\d+)", text)
-        if match:
-            cid = int(match.group(1))
-            conn = database.get_db()
-            c = conn.cursor()
-            c.execute("""
-                SELECT issue, department, location, detail, status
-                FROM complaints WHERE id=?
-            """, (cid,))
-            row = c.fetchone()
-            conn.close()
+    # ✅ ติดตามเฉพาะรูปแบบ: "ติดตาม 123" หรือ "ติดตาม #123"
+    match = re.fullmatch(r"ติดตาม\s*#?(\d+)", text)
+    if match:
+        cid = int(match.group(1))
 
-            if row:
-                return {
-                    "reply": f"""📄 รายละเอียดคำร้อง #{cid}
-ปัญหา: {row[0]}
-กอง: {row[1]}
-สถานที่: {row[2]}
-รายละเอียด: {row[3]}
-สถานะ: {row[4]}"""
-                }
-            else:
-                return {"reply": "❌ ไม่พบเลขคำร้องนี้ค่ะ"}
+        conn = database.get_db()
+        c = conn.cursor()
+        c.execute("""
+            SELECT issue, department, location, detail, status
+            FROM complaints WHERE id=?
+        """, (cid,))
+        row = c.fetchone()
+        conn.close()
 
-    # fallback chatbot เดิม
+        if row:
+            return {
+                "reply": (
+                    f"📄 รายละเอียดคำร้อง #{cid}\n"
+                    f"ปัญหา: {row[0]}\n"
+                    f"กอง: {row[1]}\n"
+                    f"สถานที่: {row[2]}\n"
+                    f"รายละเอียด: {row[3]}\n"
+                    f"สถานะ: {row[4]}"
+                )
+            }
+        else:
+            return {"reply": "❌ ไม่พบเลขคำร้องนี้ค่ะ"}
+
+    #  ถ้าไม่ใช่รูปแบบติดตาม → chatbot ปกติ
     reply = intent_bot.chatbot_response(text, threshold=0.2)
     return {"reply": reply}
+
 
 # =====================
 # CREATE COMPLAINT
@@ -109,7 +112,7 @@ async def create_complaint(req: ComplaintRequest):
 
     return {
         "complaint_id": complaint_id,
-        "message": f"✅ รับเรื่องเรียบร้อยค่ะ เลขคำร้องของคุณคือ #{complaint_id}\nสามารถใช้คำว่า 'ติดตาม #{complaint_id}' เพื่อดูสถานะได้ค่ะ"
+        "message": f" รับเรื่องเรียบร้อยค่ะ เลขคำร้องของคุณคือ #{complaint_id}\n\nสามารถใช้คำว่า '{complaint_id}' เพื่อดูสถานะได้ค่ะ"
     }
 
 # =====================

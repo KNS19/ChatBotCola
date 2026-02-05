@@ -66,11 +66,16 @@ function toggleForm(){
 }
 
 async function submitComplaint(){
+    const issue = document.getElementById("issue");
+    const department = document.getElementById("department");
+    const location = document.getElementById("location");
+    const detail = document.getElementById("detail");
+
     const data = {
-        issue: document.getElementById("issue").value,
-        department: document.getElementById("department").value,
-        location: document.getElementById("location").value,
-        detail: document.getElementById("detail").value
+        issue: issue.value,
+        department: department.value,
+        location: location.value,
+        detail: detail.value
     };
 
     const res = await fetch("/complaint", {
@@ -80,7 +85,14 @@ async function submitComplaint(){
     });
 
     const result = await res.json();
-    addMessage(result.message, "bot"); // ✅ message มีจริง
+    addMessage(result.message, "bot");
+
+    // ✅ reset form (ไม่ค้างข้อมูลเดิม)
+    issue.value = "";
+    department.value = "";
+    location.value = "";
+    detail.value = "";
+
     toggleForm();
 }
 
