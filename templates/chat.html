@@ -67,10 +67,10 @@ function toggleForm(){
 
 async function submitComplaint(){
     const data = {
-        issue: issue.value,
-        department: department.value,
-        location: location.value,
-        detail: detail.value
+        issue: document.getElementById("issue").value,
+        department: document.getElementById("department").value,
+        location: document.getElementById("location").value,
+        detail: document.getElementById("detail").value
     };
 
     const res = await fetch("/complaint", {
@@ -80,9 +80,10 @@ async function submitComplaint(){
     });
 
     const result = await res.json();
-    addMessage(result.message, "bot");
+    addMessage(result.message, "bot"); // ✅ message มีจริง
     toggleForm();
 }
+
 
 async function send(){
     const input = document.getElementById("msg");
