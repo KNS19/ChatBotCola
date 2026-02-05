@@ -1,5 +1,7 @@
 import sys
+import re
 import intent_bot
+import database
 from fastapi import Request, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -42,18 +44,73 @@ async def index():
         return f.read()
 
 # =====================
-# WEB CHAT API
+# MODELS
 # =====================
 class ChatRequest(BaseModel):
     message: str
 
-class ChatResponse(BaseModel):
-    reply: str
+class ComplaintRequest(BaseModel):
+    issue: str
+    department: str
+    location: str
+    detail: str
 
-@app.post("/chat", response_model=ChatResponse)
+# =====================
+# CHAT API
+# =====================
+@app.post("/chat")
 async def chat_api(req: ChatRequest):
-    reply = intent_bot.chatbot_response(req.message, threshold=0.2)
+    text = req.message
+
+    # ตรวจจับการติดตามคำร้อง
+    if "ติดตาม" in text:
+        match = re.search(r"#?(\d+)", text)
+        if match:
+            cid = int(match.group(1))
+            conn = database.get_db()
+            c = conn.cursor()
+            c.execute("""
+                SELECT issue, department, location, detail, status
+                FROM complaints WHERE id=?
+            """, (cid,))
+            row = c.fetchone()
+            conn.close()
+
+            if row:
+                return {
+                    "reply": f"""📄 รายละเอียดคำร้อง #{cid}
+ปัญหา: {row[0]}
+กอง: {row[1]}
+สถานที่: {row[2]}
+รายละเอียด: {row[3]}
+สถานะ: {row[4]}"""
+                }
+            else:
+                return {"reply": "❌ ไม่พบเลขคำร้องนี้ค่ะ"}
+
+    # fallback chatbot เดิม
+    reply = intent_bot.chatbot_response(text, threshold=0.2)
     return {"reply": reply}
+
+# =====================
+# CREATE COMPLAINT
+# =====================
+@app.post("/complaint")
+async def create_complaint(req: ComplaintRequest):
+    conn = database.get_db()
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO complaints (issue, department, location, detail)
+        VALUES (?, ?, ?, ?)
+    """, (req.issue, req.department, req.location, req.detail))
+    conn.commit()
+    complaint_id = c.lastrowid
+    conn.close()
+
+    return {
+        "complaint_id": complaint_id,
+        "message": f"✅ รับเรื่องเรียบร้อยค่ะ เลขคำร้องของคุณคือ #{complaint_id}\nสามารถใช้คำว่า 'ติดตาม #{complaint_id}' เพื่อดูสถานะได้ค่ะ"
+    }
 
 # =====================
 # LINE WEBHOOK
@@ -61,9 +118,7 @@ async def chat_api(req: ChatRequest):
 @app.post("/callback")
 async def handle_callback(request: Request):
     signature = request.headers.get("X-Line-Signature")
-
-    body = await request.body()
-    body = body.decode("utf-8")
+    body = (await request.body()).decode("utf-8")
 
     try:
         events = parser.parse(body, signature)
