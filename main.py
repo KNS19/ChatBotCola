@@ -112,7 +112,7 @@ async def create_complaint(req: ComplaintRequest):
 
     return {
         "complaint_id": complaint_id,
-        "message": f" รับเรื่องเรียบร้อยค่ะ เลขคำร้องของคุณคือ #{complaint_id}\n\nสามารถใช้คำว่า '{complaint_id}' เพื่อดูสถานะได้ค่ะ"
+        "message": f" รับเรื่องเรียบร้อยค่ะ เลขคำร้องของคุณคือ #{complaint_id}\n\nสามารถใช้คำว่า 'ติดตาม {complaint_id}' เพื่อดูสถานะได้ค่ะ"
     }
 
 # =====================
