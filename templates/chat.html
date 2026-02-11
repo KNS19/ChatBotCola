@@ -333,11 +333,11 @@
 
             <button onclick="toggleForm()">📄 แจ้งเรื่องร้องเรียน</button>
 
-            <button onclick="addMessage('ขอคำปรึกษา','user')">❓ ขอคำปรึกษา</button>
-            <button onclick="addMessage('ตรวจสอบสถานะ','user')">🔍 ตรวจสอบสถานะ</button>
-            <button onclick="addMessage('ติดต่อเทศบาล','user')">📞 ติดต่อเทศบาล</button>
-            <button onclick="addMessage('สถานที่ตั้ง','user')">📍 สถานที่ตั้ง</button>
-            <button onclick="addMessage('เวลาทำการ','user')">🕒 เวลาทำการ</button>
+            <button onclick="quickSend('ขอคำปรึกษา','user')">❓ ขอคำปรึกษา</button>
+            <button onclick="quickSend('ตรวจสอบสถานะ','user')">🔍 ตรวจสอบสถานะ</button>
+            <button onclick="quickSend('ติดต่อเทศบาล','user')">📞 ติดต่อเทศบาล</button>
+            <button onclick="quickSend('สถานที่ตั้ง','user')">📍 สถานที่ตั้ง</button>
+            <button onclick="quickSend('เวลาทำการ','user')">🕒 เวลาทำการ</button>
 
         </div>
 
@@ -399,6 +399,27 @@ async function submitComplaint(){
     location.value = "";
     detail.value = "";
     toggleForm();
+}
+
+async function quickSend(text) {
+    // 1. แสดงข้อความฝั่ง User ก่อน
+    addMessage(text, 'user');
+
+    // 2. ส่งข้อความไปหา Chatbot (เรียกใช้ logic เดียวกับฟังก์ชัน send)
+    try {
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        
+        // 3. แสดงคำตอบจาก Bot
+        addMessage(data.reply, "bot");
+    } catch (error) {
+        console.error("Error:", error);
+        addMessage("ขออภัยค่ะ เกิดข้อผิดพลาดในการเชื่อมต่อ", "bot");
+    }
 }
 
 async function send(){
