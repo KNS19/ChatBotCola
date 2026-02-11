@@ -17,7 +17,6 @@ from linebot.v3.messaging import (
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import os
-from fastapi.staticfiles import StaticFiles
 
 # =====================
 # LINE CONFIG
@@ -35,8 +34,6 @@ line_bot_api = AsyncMessagingApi(async_api_client)
 parser = WebhookParser(channel_secret)
 
 app = FastAPI()
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # =====================
 # WEB PAGE
